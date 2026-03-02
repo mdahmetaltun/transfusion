@@ -3,8 +3,55 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../core/theme.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isLogin = true;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submit(AuthService authService) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email ve şifre zorunludur.')),
+      );
+      return;
+    }
+
+    try {
+      if (_isLogin) {
+        await authService.signInWithEmailPassword(email, password);
+      } else {
+        await authService.registerWithEmailPassword(email, password);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Hata: $e',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.alertRed,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,22 +59,25 @@ class LoginScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SizedBox(height: 60),
               const Icon(
                 Icons.cloud_sync_outlined,
                 size: 80,
                 color: AppTheme.okGreen,
               ),
               const SizedBox(height: 24),
-              const Text(
-                'MTP Bulut Sistemi\nKimlik Doğrulama',
+              Text(
+                _isLogin
+                    ? 'MTP Bulut Sistemi\nGiriş'
+                    : 'MTP Bulut Sistemi\nKayıt Ol',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -38,33 +88,90 @@ class LoginScreen extends StatelessWidget {
               if (authService.isLoading)
                 const Center(child: CircularProgressIndicator())
               else
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  onPressed: () async {
-                    try {
-                      await authService.signInWithGoogle();
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Giriş Hatası: $e',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          backgroundColor: AppTheme.alertRed,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _passwordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Şifre',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: () => _submit(authService),
+                      child: Text(
+                        _isLogin ? 'GİRİŞ YAP' : 'KAYIT OL',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.login),
-                  label: const Text(
-                    "Google ile Giriş Yap",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _isLogin = !_isLogin;
+                        });
+                      },
+                      child: Text(
+                        _isLogin
+                            ? 'Hesabın yok mu? Kayıt Ol'
+                            : 'Zaten hesabın var mı? Giriş Yap',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                    const Divider(color: Colors.white24, height: 48),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: () async {
+                        try {
+                          await authService.signInWithGoogle();
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Giriş Hatası: $e',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              backgroundColor: AppTheme.alertRed,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.login),
+                      label: const Text(
+                        "Google ile Devam Et",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),

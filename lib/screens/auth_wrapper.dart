@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
-import 'profile_setup_screen.dart';
+import 'facility_select_screen.dart';
 import 'splash_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -24,7 +24,7 @@ class AuthWrapper extends StatelessWidget {
 
     // Oturum var ama Rol/Profil eksik -> Profil Kurulum
     if (authService.currentUserProfile == null) {
-      return const ProfileSetupScreen();
+      return const FacilitySelectScreen();
     }
 
     // Tamamlandı -> Normal Akış/Splash

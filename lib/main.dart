@@ -10,6 +10,7 @@ import 'providers/admin_settings_provider.dart';
 import 'services/auth_service.dart';
 import 'screens/auth_wrapper.dart';
 import 'screens/splash_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/admin_screen.dart';
 import 'screens/assessment_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -44,6 +45,7 @@ class TransfusionMTPApp extends StatelessWidget {
       routes: {
         '/auth': (context) => const AuthWrapper(),
         '/splash': (context) => const SplashScreen(),
+        '/profile': (context) => const ProfileScreen(),
         '/admin': (context) => const AdminScreen(),
         '/assessment': (context) => const PatientAssessmentScreen(),
         '/dashboard': (context) => const ActiveMTPScreen(),

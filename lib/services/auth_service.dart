@@ -60,6 +60,27 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<void> signInWithEmailPassword(String email, String password) async {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+    } catch (e) {
+      if (kDebugMode) print("Email Login Error: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> registerWithEmailPassword(String email, String password) async {
+    try {
+      await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      if (kDebugMode) print("Registration Error: $e");
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     if (!_googleSignInInitialized) {
       await GoogleSignIn.instance.initialize();

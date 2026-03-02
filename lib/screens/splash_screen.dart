@@ -86,36 +86,47 @@ class SplashScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 24),
-                // Hidden/Subtle Admin button
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      final authService = Provider.of<AuthService>(
-                        context,
-                        listen: false,
-                      );
-                      if (authService.currentUserProfile?.role ==
-                          UserRole.ADMIN) {
-                        Navigator.pushNamed(context, '/admin');
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text(
-                              'Bu alana sadece ADMIN yetkisine sahip kullanıcılar erişebilir.',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: AppTheme.alertRed,
-                          ),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.settings, color: Colors.grey),
-                    label: const Text(
-                      "Kurum Ayarları",
-                      style: TextStyle(color: Colors.grey),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/profile');
+                      },
+                      icon: const Icon(Icons.person, color: Colors.grey),
+                      label: const Text(
+                        "Profilim",
+                        style: TextStyle(color: Colors.grey),
+                      ),
                     ),
-                  ),
+                    TextButton.icon(
+                      onPressed: () {
+                        final authService = Provider.of<AuthService>(
+                          context,
+                          listen: false,
+                        );
+                        if (authService.currentUserProfile?.role ==
+                            UserRole.ADMIN) {
+                          Navigator.pushNamed(context, '/admin');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Bu alana sadece ADMIN yetkisine sahip kullanıcılar erişebilir.',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              backgroundColor: AppTheme.alertRed,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.settings, color: Colors.grey),
+                      label: const Text(
+                        "Kurum Ayarları",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
