@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../providers/theme_provider.dart';
 import '../core/theme.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -9,6 +10,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final userProfile = authService.currentUserProfile;
     final firebaseUser = authService.currentFirebaseUser;
 
@@ -19,6 +21,17 @@ class ProfileScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            ),
+            onPressed: () {
+              themeProvider.toggleTheme();
+            },
+            tooltip: 'Temayı Değiştir',
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -26,19 +39,23 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
+              Icon(
                 Icons.account_circle,
                 size: 100,
-                color: Colors.white70,
+                color: Theme.of(context).iconTheme.color ?? Colors.grey,
               ),
               const SizedBox(height: 24),
               if (userProfile != null) ...[
-                _buildInfoTile('İsim', userProfile.displayName),
-                _buildInfoTile('Email', userProfile.email),
-                _buildInfoTile('Rol', userProfile.role.name),
-                _buildInfoTile('Kurum Kodu', userProfile.facilityId),
+                _buildInfoTile(context, 'İsim', userProfile.displayName),
+                _buildInfoTile(context, 'Email', userProfile.email),
+                _buildInfoTile(context, 'Rol', userProfile.role.name),
+                _buildInfoTile(context, 'Kurum Kodu', userProfile.facilityId),
               ] else if (firebaseUser != null) ...[
-                _buildInfoTile('Email', firebaseUser.email ?? 'Bilinmiyor'),
+                _buildInfoTile(
+                  context,
+                  'Email',
+                  firebaseUser.email ?? 'Bilinmiyor',
+                ),
                 const Padding(
                   padding: EdgeInsets.only(top: 16.0),
                   child: Text(
@@ -81,25 +98,39 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTile(String label, String value) {
+  Widget _buildInfoTile(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white12,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               label,
-              style: const TextStyle(color: Colors.white70, fontSize: 16),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontSize: 16,
+              ),
             ),
             Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
           ],
         ),

@@ -7,6 +7,7 @@ import 'firebase_options.dart';
 import 'core/theme.dart';
 import 'providers/mtp_state_provider.dart';
 import 'providers/admin_settings_provider.dart';
+import 'providers/theme_provider.dart';
 import 'services/auth_service.dart';
 import 'screens/auth_wrapper.dart';
 import 'screens/splash_screen.dart';
@@ -23,6 +24,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => MtpStateProvider()),
         ChangeNotifierProvider(create: (_) => AdminSettingsProvider()),
@@ -37,19 +39,25 @@ class TransfusionMTPApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MTP Protocol',
-      theme: AppTheme.darkTheme,
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/auth',
-      routes: {
-        '/auth': (context) => const AuthWrapper(),
-        '/splash': (context) => const SplashScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/admin': (context) => const AdminScreen(),
-        '/assessment': (context) => const PatientAssessmentScreen(),
-        '/dashboard': (context) => const ActiveMTPScreen(),
-        '/summary': (context) => const EndCaseScreen(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'MTP Protocol',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          debugShowCheckedModeBanner: false,
+          initialRoute: '/auth',
+          routes: {
+            '/auth': (context) => const AuthWrapper(),
+            '/splash': (context) => const SplashScreen(),
+            '/profile': (context) => const ProfileScreen(),
+            '/admin': (context) => const AdminScreen(),
+            '/assessment': (context) => const PatientAssessmentScreen(),
+            '/dashboard': (context) => const ActiveMTPScreen(),
+            '/summary': (context) => const EndCaseScreen(),
+          },
+        );
       },
     );
   }
