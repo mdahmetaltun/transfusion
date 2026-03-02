@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "692767944401",
+    "project_id": "transfusion-c725d",
+    "storage_bucket": "transfusion-c725d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692767944401:android:183099f5dd1226cd97dff0",
+        "android_client_info": {
+          "package_name": "com.example.transfusion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "692767944401-vpqb14b1mgre6t8cc2ovpujtromtmdff.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwVFkyoUJV_qdpPG_etqU8KiJ9BYBkEvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "692767944401-vpqb14b1mgre6t8cc2ovpujtromtmdff.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "692767944401-o9r27jv7ck46o5v21fuhoq1i9jsset4r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.transfusion"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
