@@ -28,8 +28,8 @@ class MtpStateProvider extends ChangeNotifier {
 
   int get totalProductsGiven => prbcCount + ffpCount + pltCount + cryoCount;
 
-  void _logEvent(EventType type, {Map<String, dynamic>? payload}) {
-    final event = MtpEvent(
+  void _logEvent(EventType type, {EventPayload? payload}) {
+    final event = MtpEvent.withPayload(
       id: const Uuid().v4(),
       caseId: currentCaseId ?? 'SYSTEM',
       type: type,
@@ -59,7 +59,16 @@ class MtpStateProvider extends ChangeNotifier {
       facilityId: facilityId,
     );
 
-    _logEvent(EventType.caseCreated, payload: {'location': location});
+    _logEvent(
+      EventType.caseCreated,
+      payload: CaseCreatedPayload(
+        location: location,
+        mechanism: 'Unknown',
+        isTrauma: true,
+        createdByUid: uid,
+        facilityId: facilityId,
+      ),
+    );
 
     // Clear old state safely
     currentPatient = PatientAssessment();
@@ -78,7 +87,9 @@ class MtpStateProvider extends ChangeNotifier {
 
   void closeCase(String notes) {
     if (currentCaseId != null) {
-      _logEvent(EventType.caseClosed, payload: {'notes': notes});
+      _logEvent(
+        EventType.caseClosed,
+      ); // no payload needed for basic close, or add payload later
       _firestoreService.closeCase(
         caseId: currentCaseId!,
         notes: notes,
@@ -103,13 +114,14 @@ class MtpStateProvider extends ChangeNotifier {
     if (mechanism != null) currentPatient.mechanism = mechanism;
 
     _logEvent(
-      EventType.vitalsUpdated,
-      payload: {
-        "hr": currentPatient.heartRate,
-        "sbp": currentPatient.systolicBp,
-        "fast": currentPatient.isFastPositive,
-        "mech": currentPatient.mechanism.name,
-      },
+      EventType.triageUpdated,
+      payload: TriageUpdatedPayload(
+        hr: currentPatient.heartRate,
+        sbp: currentPatient.systolicBp,
+        isFastPositive: currentPatient.isFastPositive,
+        riskLevel: currentPatient.calculateRisk().name,
+        riskReason: mechanism?.name ?? 'Unknown',
+      ),
     );
     notifyListeners();
   }
@@ -120,19 +132,9 @@ class MtpStateProvider extends ChangeNotifier {
 
     if (decision) {
       mtpActivationTime = DateTime.now();
-      _logEvent(
-        EventType.mtpActivated,
-        payload: {
-          "ABC_Score": currentPatient.calculateABCScore(),
-          "Risk_Level": currentPatient.calculateRisk().name,
-          "Gestalt": currentPatient.preDecision,
-        },
-      );
+      _logEvent(EventType.mtpActivated);
     } else {
-      _logEvent(
-        EventType.mtpDeclined,
-        payload: {"ABC_Score": currentPatient.calculateABCScore()},
-      );
+      _logEvent(EventType.mtpNotActivated);
     }
     notifyListeners();
   }
@@ -144,7 +146,10 @@ class MtpStateProvider extends ChangeNotifier {
     if (type == 'TSP') pltCount++;
     if (type == 'KRİYO') cryoCount++;
 
-    _logEvent(EventType.productAdded, payload: {"tip": type});
+    _logEvent(
+      EventType.productAdded,
+      payload: ProductPayload(productType: type, amount: 1),
+    );
     notifyListeners();
   }
 
@@ -154,7 +159,10 @@ class MtpStateProvider extends ChangeNotifier {
     if (type == 'TSP' && pltCount > 0) pltCount--;
     if (type == 'KRİYO' && cryoCount > 0) cryoCount--;
 
-    _logEvent(EventType.productRemoved, payload: {"tip": type});
+    _logEvent(
+      EventType.productRemoved,
+      payload: ProductPayload(productType: type, amount: 1),
+    );
     notifyListeners();
   }
 
@@ -164,14 +172,21 @@ class MtpStateProvider extends ChangeNotifier {
   }
 
   void logAlertFired(String alertName) {
-    _logEvent(EventType.alertFired, payload: {"alert": alertName});
+    _logEvent(
+      EventType.alertFired,
+      payload: AlertPayload(
+        alertId: alertName,
+        message: alertName,
+        severity: 'WARNING',
+      ),
+    );
   }
 
   // --- POC Updates ---
   void updatePOC(double? teg, double? inr) {
     rotumExTemCa5 = teg;
     ptInr = inr;
-    _logEvent(EventType.pocUpdated, payload: {"rotum": teg, "inr": inr});
+    _logEvent(EventType.pocResultRecorded);
     notifyListeners();
   }
 
@@ -179,8 +194,10 @@ class MtpStateProvider extends ChangeNotifier {
     currentPatient.preDecision = decision;
 
     _logEvent(
-      EventType.vitalsUpdated,
-      payload: {"karar": decision ? "Aktifleştir" : "Aktifleştirme"},
+      EventType.gestaltRecorded,
+      payload: GestaltRecordedPayload(
+        decision: decision ? "Aktifleştir" : "Aktifleştirme",
+      ),
     );
     notifyListeners();
   }
