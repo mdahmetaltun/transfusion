@@ -1,11 +1,73 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../services/auth_service.dart';
 import '../providers/theme_provider.dart';
 import '../core/theme.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isUploading = false;
+
+  Future<void> _pickAndUploadImage(AuthService authService) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 75,
+    );
+
+    if (pickedFile == null) return;
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      final user = authService.currentUserProfile;
+      if (user == null) return;
+
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('user_photos')
+          .child('${user.uid}.jpg');
+
+      await storageRef.putFile(File(pickedFile.path));
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      await authService.updateUserProfilePhoto(downloadUrl);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil fotoğrafı güncellendi')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fotoğraf yüklenemedi: $e'),
+            backgroundColor: AppTheme.alertRed,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,6 +75,8 @@ class ProfileScreen extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final userProfile = authService.currentUserProfile;
     final firebaseUser = authService.currentFirebaseUser;
+
+    final displayPhotoUrl = userProfile?.photoUrl ?? firebaseUser?.photoURL;
 
     return Scaffold(
       appBar: AppBar(
@@ -39,12 +103,60 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(
-                Icons.account_circle,
-                size: 100,
-                color: Theme.of(context).iconTheme.color ?? Colors.grey,
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: themeProvider.isDarkMode
+                          ? Colors.grey[800]
+                          : Colors.grey[200],
+                      backgroundImage: displayPhotoUrl != null
+                          ? NetworkImage(displayPhotoUrl)
+                          : null,
+                      child: displayPhotoUrl == null
+                          ? Icon(
+                              Icons.person,
+                              size: 70,
+                              color: themeProvider.isDarkMode
+                                  ? Colors.grey[600]
+                                  : Colors.grey[400],
+                            )
+                          : null,
+                    ),
+                    if (_isUploading)
+                      const Positioned.fill(
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _isUploading
+                            ? null
+                            : () => _pickAndUploadImage(authService),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               if (userProfile != null) ...[
                 _buildInfoTile(context, 'İsim', userProfile.displayName),
                 _buildInfoTile(context, 'Email', userProfile.email),
@@ -105,12 +217,15 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -120,15 +235,18 @@ class ProfileScreen extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-                fontSize: 16,
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
             Text(
               value,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 15,
                 color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),

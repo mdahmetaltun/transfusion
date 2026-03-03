@@ -8,6 +8,7 @@ class UserModel {
   final String email;
   final UserRole role;
   final String facilityId;
+  final String? photoUrl;
 
   UserModel({
     required this.uid,
@@ -15,6 +16,7 @@ class UserModel {
     required this.email,
     required this.role,
     required this.facilityId,
+    this.photoUrl,
   });
 
   Map<String, dynamic> toMap() {
@@ -24,6 +26,7 @@ class UserModel {
       'email': email,
       'role': role.toString().split('.').last,
       'facilityId': facilityId,
+      'photoUrl': photoUrl,
     };
   }
 
@@ -37,6 +40,7 @@ class UserModel {
         orElse: () => UserRole.NURSE,
       ),
       facilityId: map['facilityId'] ?? 'DEFAULT',
+      photoUrl: map['photoUrl'],
     );
   }
 }

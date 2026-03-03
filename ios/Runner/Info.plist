@@ -76,5 +76,11 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Profil fotoğrafı seçmek için galeri erişimi gereklidir.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Profil fotoğrafı çekmek için kamera erişimi gereklidir.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Video kaydı için mikrofon erişimi gereklidir.</string>
 </dict>
 </plist>

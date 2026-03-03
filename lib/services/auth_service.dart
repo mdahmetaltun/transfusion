@@ -108,4 +108,22 @@ class AuthService extends ChangeNotifier {
     currentUserProfile = user;
     notifyListeners();
   }
+
+  Future<void> updateUserProfilePhoto(String photoUrl) async {
+    if (currentUserProfile == null) return;
+
+    await _firestore.collection('users').doc(currentUserProfile!.uid).update({
+      'photoUrl': photoUrl,
+    });
+
+    currentUserProfile = UserModel(
+      uid: currentUserProfile!.uid,
+      displayName: currentUserProfile!.displayName,
+      email: currentUserProfile!.email,
+      role: currentUserProfile!.role,
+      facilityId: currentUserProfile!.facilityId,
+      photoUrl: photoUrl,
+    );
+    notifyListeners();
+  }
 }
