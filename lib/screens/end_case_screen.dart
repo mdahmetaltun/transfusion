@@ -90,7 +90,9 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: isDark ? Colors.transparent : theme.colorScheme.outline,
+                  color: isDark
+                      ? Colors.transparent
+                      : theme.colorScheme.outline,
                 ),
               ),
               child: Padding(
@@ -130,7 +132,8 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
               controller: _notesController,
               maxLines: 4,
               decoration: const InputDecoration(
-                labelText: 'Klinik Not / Süreç Hakkında Serbest Metin (Opsiyonel)',
+                labelText:
+                    'Klinik Not / Süreç Hakkında Serbest Metin (Opsiyonel)',
                 border: OutlineInputBorder(),
                 alignLabelWithHint: true,
               ),

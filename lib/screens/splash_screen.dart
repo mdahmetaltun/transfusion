@@ -21,10 +21,11 @@ class SplashScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.medical_services_outlined,
-                  size: 80,
-                  color: AppTheme.alertRed,
+                Image.asset(
+                  'assets/images/flutter_mark.png',
+                  width: 84,
+                  height: 84,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -38,7 +39,9 @@ class SplashScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 36),
                 Card(
-                  color: isDark ? Colors.black45 : AppTheme.lightSurfaceAltColor,
+                  color: isDark
+                      ? Colors.black45
+                      : AppTheme.lightSurfaceAltColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(

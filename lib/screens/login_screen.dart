@@ -68,10 +68,11 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 60),
-              const Icon(
-                Icons.cloud_sync_outlined,
-                size: 80,
-                color: AppTheme.okGreen,
+              Image.asset(
+                'assets/images/flutter_mark.png',
+                width: 84,
+                height: 84,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
               Text(
@@ -100,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     boxShadow: [
                       if (!isDark)
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
+                          color: Colors.black.withValues(alpha: 0.06),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -159,10 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               : 'Zaten hesabın var mı? Giriş Yap',
                         ),
                       ),
-                      Divider(
-                        color: theme.dividerTheme.color,
-                        height: 48,
-                      ),
+                      Divider(color: theme.dividerTheme.color, height: 48),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.surface,

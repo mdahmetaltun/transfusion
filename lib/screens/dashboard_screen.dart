@@ -230,7 +230,7 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
     if (warning == null) return const SizedBox.shrink();
 
     return Card(
-      color: AppTheme.warningOrange.withOpacity(0.85),
+      color: AppTheme.warningOrange.withValues(alpha: 0.85),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
@@ -354,7 +354,9 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.4)),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withValues(alpha: 0.4),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -377,7 +379,7 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
                 IconButton(
                   icon: const Icon(Icons.remove_circle_outline),
                   onPressed: onRemove,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   iconSize: 32,
                 ),
                 SizedBox(

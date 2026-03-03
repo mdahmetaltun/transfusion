@@ -69,9 +69,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kurum Ayarları (Admin)'),
-      ),
+      appBar: AppBar(title: const Text('Kurum Ayarları (Admin)')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -107,7 +105,9 @@ class _AdminScreenState extends State<AdminScreen> {
                   ? '2:1:1 (Travma/Askeri Standart)'
                   : '1:1:1 (Genel MTP Standardı)',
             ),
-            subtitle: const Text('Dashboard hesaplamaları buna göre yapılacaktır'),
+            subtitle: const Text(
+              'Dashboard hesaplamaları buna göre yapılacaktır',
+            ),
             value: _use211,
             activeColor: AppTheme.primaryColor,
             onChanged: (val) {

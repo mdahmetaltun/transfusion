@@ -143,9 +143,8 @@ class _FacilitySelectScreenState extends State<FacilitySelectScreen> {
                             helperText:
                                 'Standart giriş için DFLT-001 kullanabilirsiniz.',
                           ),
-                          onSaved: (value) => _facilityId = value?.isNotEmpty == true
-                              ? value!
-                              : 'DFLT-001',
+                          onSaved: (value) => _facilityId =
+                              value?.isNotEmpty == true ? value! : 'DFLT-001',
                         ),
                         const SizedBox(height: 24),
                         if (_isLoading)

@@ -83,7 +83,7 @@ class AppTheme {
         activeTrackColor: primaryColor,
         inactiveTrackColor: Colors.grey[700],
         thumbColor: primaryColor,
-        overlayColor: primaryColor.withOpacity(0.2),
+        overlayColor: primaryColor.withValues(alpha: 0.2),
         valueIndicatorTextStyle: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
@@ -188,7 +188,7 @@ class AppTheme {
         activeTrackColor: primaryColor,
         inactiveTrackColor: Colors.grey[400],
         thumbColor: primaryColor,
-        overlayColor: primaryColor.withOpacity(0.2),
+        overlayColor: primaryColor.withValues(alpha: 0.2),
         valueIndicatorTextStyle: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
