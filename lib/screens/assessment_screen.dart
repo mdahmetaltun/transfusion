@@ -86,10 +86,14 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _buildSectionHeader('Hayati Bulgular (ABC Skoru İçin)'),
+              _buildSectionHeader(
+                'Hayati Bulgular (ABC Skoru İçin)',
+                Icons.favorite,
+              ),
               _buildSliderRow(
                 context,
                 "Nabız (Kalp Hızı)",
+                Icons.monitor_heart,
                 patient.heartRate.toDouble(),
                 40,
                 200,
@@ -99,6 +103,7 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
               _buildSliderRow(
                 context,
                 "Sistolik Kan Basıncı (SKB)",
+                Icons.bloodtype,
                 patient.systolicBp.toDouble(),
                 40,
                 220,
@@ -111,7 +116,7 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
 
               const SizedBox(height: 16),
 
-              _buildSectionHeader('Travma Tipi'),
+              _buildSectionHeader('Travma Tipi', Icons.personal_injury),
               _buildMechanismSelector(context, provider),
 
               const SizedBox(height: 24),
@@ -129,16 +134,22 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textGrey,
-        ),
+      padding: const EdgeInsets.only(top: 24.0, bottom: 12.0, left: 4.0),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 22),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textGrey,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -146,32 +157,67 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
   Widget _buildSliderRow(
     BuildContext context,
     String title,
+    IconData icon,
     double value,
     double min,
     double max,
     String unit,
     Function(double) onChanged,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: Theme.of(context).textTheme.bodyLarge),
-                Text(
-                  '${value.toStringAsFixed(0)} $unit',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.warningOrange,
+                Row(
+                  children: [
+                    Icon(
+                      icon,
+                      color: isDark ? Colors.blue[300] : Colors.blue[700],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${value.toStringAsFixed(0)} $unit',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? AppTheme.warningOrange
+                          : Colors.orange[800],
+                    ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 8),
             Slider(value: value, min: min, max: max, onChanged: onChanged),
           ],
         ),
@@ -181,16 +227,34 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
 
   Widget _buildFastRow(BuildContext context, MtpStateProvider provider) {
     final patient = provider.currentPatient;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              "FAST USG Pozitif (Sıvı var)",
-              style: Theme.of(context).textTheme.bodyLarge,
+            Row(
+              children: [
+                Icon(
+                  Icons.monitor_heart_outlined,
+                  color: isDark ? Colors.purple[300] : Colors.purple[700],
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  "FAST USG Pozitif (Sıvı var)",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+              ],
             ),
             Switch(
               value: patient.isFastPositive,
@@ -208,6 +272,7 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
     MtpStateProvider provider,
   ) {
     final patient = provider.currentPatient;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     String getLabel(InjuryMechanism mechanism) {
       switch (mechanism) {
@@ -220,19 +285,52 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
       }
     }
 
+    IconData getIcon(InjuryMechanism mechanism) {
+      switch (mechanism) {
+        case InjuryMechanism.blunt:
+          return Icons.car_crash;
+        case InjuryMechanism.penetrating:
+          return Icons.colorize;
+        case InjuryMechanism.nonTrauma:
+          return Icons.medical_services_outlined;
+      }
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: InjuryMechanism.values.map((mech) {
         final isSelected = patient.mechanism == mech;
         return ChoiceChip(
-          label: Text(getLabel(mech)),
+          label: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            child: Column(
+              children: [
+                Icon(
+                  getIcon(mech),
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.grey[400] : Colors.grey[700]),
+                  size: 28,
+                ),
+                const SizedBox(height: 8),
+                Text(getLabel(mech)),
+              ],
+            ),
+          ),
           selected: isSelected,
           onSelected: (selected) {
             if (selected) provider.updateVitals(mechanism: mech);
           },
           selectedColor: AppTheme.primaryColor,
+          backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           labelStyle: TextStyle(
-            color: isSelected ? Colors.white : AppTheme.textGrey,
+            fontWeight: FontWeight.bold,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.grey[300] : Colors.black87),
           ),
         );
       }).toList(),
@@ -243,45 +341,90 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
     BuildContext context,
     MtpStateProvider provider,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      color: Colors.blueGrey[900],
+      color: isDark ? const Color(0xFF263238) : Colors.blue[50],
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            const Text(
-              "KLİNİK KARAR (GESTALT)",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.blueAccent,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.psychology,
+                  color: isDark ? Colors.blueAccent : Colors.blue[800],
+                  size: 28,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "KLİNİK KARAR (GESTALT)",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: isDark ? Colors.blueAccent : Colors.blue[800],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            const Text(
+            const SizedBox(height: 12),
+            Text(
               "Klinik önsezinize göre MTP'yi aktive etmeyi düşünüyor musunuz?",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.okGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () => provider.savePreDecision(true),
-                    child: const Text("EVET"),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text(
+                      "EVET",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[700],
+                      backgroundColor: isDark
+                          ? Colors.grey[700]
+                          : Colors.grey[400],
+                      foregroundColor: isDark ? Colors.white : Colors.black87,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () => provider.savePreDecision(false),
-                    child: const Text("HAYIR"),
+                    icon: const Icon(Icons.cancel_outlined),
+                    label: const Text(
+                      "HAYIR",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -300,36 +443,55 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
     final score = provider.currentPatient.calculateABCScore();
     Color riskColor;
     String riskLabel;
+    IconData riskIcon;
 
     switch (risk) {
       case RiskLevel.low:
-        riskColor = Colors.green;
+        riskColor = AppTheme.okGreen;
         riskLabel = "DÜŞÜK ($score Puan)";
+        riskIcon = Icons.shield_outlined;
         break;
       case RiskLevel.high:
-        riskColor = Colors.red;
+        riskColor = AppTheme.alertRed;
         riskLabel = "YÜKSEK ($score Puan)";
+        riskIcon = Icons.warning_amber_rounded;
         break;
     }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       children: [
         Card(
-          color: riskColor.withOpacity(0.2),
+          color: riskColor.withOpacity(isDark ? 0.2 : 0.1),
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: riskColor, width: 2),
-            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: riskColor.withOpacity(0.5), width: 2),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("ABC Skoru:", style: TextStyle(fontSize: 18)),
+                Row(
+                  children: [
+                    Icon(riskIcon, color: riskColor, size: 28),
+                    const SizedBox(width: 8),
+                    Text(
+                      "ABC Skoru:",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
                 Text(
                   riskLabel,
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: riskColor,
                   ),
@@ -338,22 +500,59 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
-          "NİHAİ KARAR",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        const SizedBox(height: 32),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.gavel,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "NİHAİ KARAR",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.alertRed),
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.alertRed,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
           onPressed: () => _handleFinalDecision(context, provider, true),
-          child: const Text("MTP'Yİ AKTİVE ET"),
+          icon: const Icon(Icons.play_circle_fill, size: 28),
+          label: const Text(
+            "MTP'Yİ AKTİVE ET",
+            style: TextStyle(fontSize: 18, letterSpacing: 1.2),
+          ),
         ),
-        const SizedBox(height: 12),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[800]),
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
+            foregroundColor: isDark ? Colors.white : Colors.black87,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
           onPressed: () => _handleFinalDecision(context, provider, false),
-          child: const Text("MTP'Yİ İPTAL ET / AKTİVE ETME"),
+          icon: const Icon(Icons.stop_circle_outlined, size: 24),
+          label: const Text(
+            "MTP'Yİ İPTAL ET / AKTİVE ETME",
+            style: TextStyle(fontSize: 16),
+          ),
         ),
       ],
     );
