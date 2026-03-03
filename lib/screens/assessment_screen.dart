@@ -78,7 +78,13 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('MTP Risk Değerlendirmesi')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('MTP Risk Değerlendirmesi'),
+      ),
       body: Consumer<MtpStateProvider>(
         builder: (context, provider, child) {
           final patient = provider.currentPatient;
@@ -87,6 +93,7 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               _buildSectionHeader(
+                context,
                 'Hayati Bulgular (ABC Skoru İçin)',
                 Icons.favorite,
               ),
@@ -116,11 +123,15 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
 
               const SizedBox(height: 16),
 
-              _buildSectionHeader('Travma Tipi', Icons.personal_injury),
+              _buildSectionHeader(
+                context,
+                'Travma Tipi',
+                Icons.personal_injury,
+              ),
               _buildMechanismSelector(context, provider),
 
               const SizedBox(height: 24),
-              const Divider(color: Colors.white24),
+              Divider(color: Theme.of(context).dividerTheme.color),
 
               // Module 2: Pre-Decision
               if (patient.preDecision == null)
@@ -134,7 +145,11 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    IconData icon,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(top: 24.0, bottom: 12.0, left: 4.0),
       child: Row(
@@ -143,10 +158,10 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
           const SizedBox(width: 8),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textGrey,
+              color: Theme.of(context).textTheme.titleLarge?.color,
             ),
           ),
         ],
@@ -296,24 +311,27 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
       }
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 12.0,
+      alignment: WrapAlignment.center,
       children: InjuryMechanism.values.map((mech) {
         final isSelected = patient.mechanism == mech;
         return ChoiceChip(
           label: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   getIcon(mech),
                   color: isSelected
                       ? Colors.white
                       : (isDark ? Colors.grey[400] : Colors.grey[700]),
-                  size: 28,
+                  size: 24,
                 ),
-                const SizedBox(height: 8),
-                Text(getLabel(mech)),
+                const SizedBox(height: 4),
+                Text(getLabel(mech), style: const TextStyle(fontSize: 12)),
               ],
             ),
           ),
@@ -387,23 +405,28 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.okGreen,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 4,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: () => provider.savePreDecision(true),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text(
-                      "EVET",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    icon: const Icon(Icons.check_circle_outline, size: 20),
+                    label: const FittedBox(
+                      child: Text(
+                        "EVET",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
@@ -411,18 +434,23 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
                           ? Colors.grey[700]
                           : Colors.grey[400],
                       foregroundColor: isDark ? Colors.white : Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 4,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: () => provider.savePreDecision(false),
-                    icon: const Icon(Icons.cancel_outlined),
-                    label: const Text(
-                      "HAYIR",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    icon: const Icon(Icons.cancel_outlined, size: 20),
+                    label: const FittedBox(
+                      child: Text(
+                        "HAYIR",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -525,16 +553,18 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.alertRed,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
           onPressed: () => _handleFinalDecision(context, provider, true),
           icon: const Icon(Icons.play_circle_fill, size: 28),
-          label: const Text(
-            "MTP'Yİ AKTİVE ET",
-            style: TextStyle(fontSize: 18, letterSpacing: 1.2),
+          label: const FittedBox(
+            child: Text(
+              "MTP'Yİ AKTİVE ET",
+              style: TextStyle(fontSize: 18, letterSpacing: 1.2),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -542,16 +572,18 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
             foregroundColor: isDark ? Colors.white : Colors.black87,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
           onPressed: () => _handleFinalDecision(context, provider, false),
           icon: const Icon(Icons.stop_circle_outlined, size: 24),
-          label: const Text(
-            "MTP'Yİ İPTAL ET / AKTİVE ETME",
-            style: TextStyle(fontSize: 16),
+          label: const FittedBox(
+            child: Text(
+              "MTP'Yİ İPTAL ET / AKTİVE ETME",
+              style: TextStyle(fontSize: 16),
+            ),
           ),
         ),
       ],

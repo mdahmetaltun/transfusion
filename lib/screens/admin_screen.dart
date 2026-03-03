@@ -66,16 +66,17 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Kurum Ayarları (Admin)"),
-        backgroundColor: Colors.blueGrey[900],
+        title: const Text('Kurum Ayarları (Admin)'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           const Text(
-            "Temel MTP Ayarları",
+            'Temel MTP Ayarları',
             style: TextStyle(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.bold,
@@ -83,42 +84,39 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
           TextField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
-              labelText: "Kan Bankası Çağrı Numarası",
-              helperText: "Örn: 1122, 05551234567 vb.",
+              labelText: 'Kan Bankası Çağrı Numarası',
+              helperText: 'Örn: 1122, 05551234567 vb.',
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 24),
-
-          const Text(
-            "Hedef Kan Ürünü Oranı",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            'Hedef Kan Ürünü Oranı',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
           ),
           SwitchListTile(
             title: Text(
               _use211
-                  ? "2:1:1 (Travma/Askeri Standart)"
-                  : "1:1:1 (Genel MTP Standardı)",
+                  ? '2:1:1 (Travma/Askeri Standart)'
+                  : '1:1:1 (Genel MTP Standardı)',
             ),
-            subtitle: const Text(
-              "Dashboard hesaplamaları buna göre yapılacaktır",
-            ),
+            subtitle: const Text('Dashboard hesaplamaları buna göre yapılacaktır'),
             value: _use211,
             activeColor: AppTheme.primaryColor,
             onChanged: (val) {
               setState(() => _use211 = val);
             },
           ),
-
-          const Divider(height: 48, color: Colors.grey),
-
+          Divider(height: 48, color: theme.dividerTheme.color),
           const Text(
-            "Protokol Eşikleri & Uyarılar",
+            'Protokol Eşikleri & Uyarılar',
             style: TextStyle(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.bold,
@@ -126,39 +124,36 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
           TextField(
             controller: _calciumController,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
-              labelText: "Kalsiyum Uyarı Eşiği (Ünite)",
+              labelText: 'Kalsiyum Uyarı Eşiği (Ünite)',
               helperText:
-                  "Kaç ünite kanda bir kalsiyum uyarısı verilsin? (Varsayılan: 4)",
+                  'Kaç ünite kanda bir kalsiyum uyarısı verilsin? (Varsayılan: 4)',
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 16),
-
           TextField(
             controller: _txaController,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
-              labelText: "TXA Altın Pencere Süresi (Saat)",
-              helperText: "Sayaç kaç saatten geriye saysın? (Varsayılan: 3)",
+              labelText: 'TXA Altın Pencere Süresi (Saat)',
+              helperText: 'Sayaç kaç saatten geriye saysın? (Varsayılan: 3)',
               border: OutlineInputBorder(),
             ),
           ),
-
           const SizedBox(height: 48),
-
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               backgroundColor: AppTheme.okGreen,
+              foregroundColor: Colors.white,
             ),
             icon: const Icon(Icons.save),
             label: const Text(
-              "AYARLARI KAYDET",
+              'AYARLARI KAYDET',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             onPressed: _saveSettings,

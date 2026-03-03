@@ -9,6 +9,9 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -24,79 +27,91 @@ class SplashScreen extends StatelessWidget {
                   color: AppTheme.alertRed,
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Masif Transfüzyon Protokolü\n(MTP) Karar Destek Sistemi',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.textTheme.headlineMedium?.color,
                   ),
                 ),
-                const SizedBox(height: 48),
-
-                const Card(
-                  color: Colors.black45,
+                const SizedBox(height: 36),
+                Card(
+                  color: isDark ? Colors.black45 : AppTheme.lightSurfaceAltColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: isDark
+                          ? Colors.transparent
+                          : theme.colorScheme.outline,
+                    ),
+                  ),
                   child: Padding(
-                    padding: EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.warning_amber_rounded,
                           color: AppTheme.warningOrange,
                           size: 40,
                         ),
-                        SizedBox(height: 16),
-                        Text(
-                          "DİKKAT VE YASAL UYARI",
+                        const SizedBox(height: 16),
+                        const Text(
+                          'DİKKAT VE YASAL UYARI',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                             color: AppTheme.warningOrange,
                           ),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
-                          "Bu uygulama bir klinik karar destek aracıdır ve tek başına klinik karar verdirmek amacıyla kullanılamaz. Son karar her zaman hekime ve klinik gestalt değerlendirmesine aittir.\n\nSisteme hasta adı veya TC kimlik numarası (PHI) girmeyiniz.",
+                          'Bu uygulama bir klinik karar destek aracıdır ve tek başına klinik karar verdirmek amacıyla kullanılamaz. Son karar her zaman hekime ve klinik gestalt değerlendirmesine aittir.\n\nSisteme hasta adı veya TC kimlik numarası (PHI) girmeyiniz.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 16,
+                            height: 1.35,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 48),
-
+                const SizedBox(height: 40),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 20),
                   ),
                   onPressed: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      '/assessment',
-                    ); // Go to assessment
+                    Navigator.pushReplacementNamed(context, '/assessment');
                   },
                   child: const Text(
-                    "OKUDUM, KABUL EDİYORUM",
+                    'OKUDUM, KABUL EDİYORUM',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
-
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                const SizedBox(height: 20),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
                     TextButton.icon(
                       onPressed: () {
                         Navigator.pushNamed(context, '/profile');
                       },
-                      icon: const Icon(Icons.person, color: Colors.grey),
-                      label: const Text(
-                        "Profilim",
-                        style: TextStyle(color: Colors.grey),
+                      icon: Icon(
+                        Icons.person,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                      label: Text(
+                        'Profilim',
+                        style: TextStyle(
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
                       ),
                     ),
                     TextButton.icon(
@@ -110,8 +125,8 @@ class SplashScreen extends StatelessWidget {
                           Navigator.pushNamed(context, '/admin');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
+                            const SnackBar(
+                              content: Text(
                                 'Bu alana sadece ADMIN yetkisine sahip kullanıcılar erişebilir.',
                                 style: TextStyle(color: Colors.white),
                               ),
@@ -120,10 +135,15 @@ class SplashScreen extends StatelessWidget {
                           );
                         }
                       },
-                      icon: const Icon(Icons.settings, color: Colors.grey),
-                      label: const Text(
-                        "Kurum Ayarları",
-                        style: TextStyle(color: Colors.grey),
+                      icon: Icon(
+                        Icons.settings,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                      label: Text(
+                        'Kurum Ayarları',
+                        style: TextStyle(
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
                       ),
                     ),
                   ],

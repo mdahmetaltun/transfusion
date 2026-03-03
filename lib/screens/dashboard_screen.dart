@@ -50,17 +50,17 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.alertRed,
         title: const Text(
-          "MTP AKTİFLEŞTİRİLDİ",
+          'MTP AKTİFLEŞTİRİLDİ',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: const Text(
-          "İlk kan setlerini istemek için Kan Bankasını hemen arayın.",
+          'İlk kan setlerini istemek için Kan Bankasını hemen arayın.',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("ATLA", style: TextStyle(color: Colors.white70)),
+            child: const Text('ATLA', style: TextStyle(color: Colors.white70)),
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
@@ -79,7 +79,7 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
               }
             },
             icon: const Icon(Icons.phone),
-            label: const Text("KAN BANKASINI ARA"),
+            label: const Text('KAN BANKASINI ARA'),
           ),
         ],
       ),
@@ -99,24 +99,24 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
 
     _isCalciumDialogOpen = true;
     _lastCalciumAlertMultiple = currentMultiple;
-    stateProvider.logAlertFired("Kalsiyum Uyarisi ($totalProducts urun)");
+    stateProvider.logAlertFired('Kalsiyum Uyarisi ($totalProducts urun)');
 
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text(
-          "KALSİYUM UYARISI",
+          'KALSİYUM UYARISI',
           style: TextStyle(color: AppTheme.warningOrange),
         ),
         content: Text(
-          "$totalProducts ünite kan ürünü verildi.\nHipokalsemiyi önlemek için 1 gram Kalsiyum Klorür/Glukonat uygulayın.",
+          '$totalProducts ünite kan ürünü verildi.\nHipokalsemiyi önlemek için 1 gram Kalsiyum Klorür/Glukonat uygulayın.',
         ),
         actions: [
           ElevatedButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
             },
-            child: const Text("ANLADIM / UYGULADIM"),
+            child: const Text('ANLADIM / UYGULADIM'),
           ),
         ],
       ),
@@ -127,10 +127,14 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('AKTİF MTP TAKİBİ'),
         backgroundColor: AppTheme.alertRed,
+        foregroundColor: Colors.white,
         automaticallyImplyLeading: false, // Prevent accidental back navigation
       ),
       body: Consumer<MtpStateProvider>(
@@ -149,61 +153,67 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
             children: [
               _buildWarningsArea(provider),
               const SizedBox(height: 16),
-
-              _buildTimersArea(),
+              _buildTimersArea(context),
               const SizedBox(height: 16),
-
-              const Text(
-                "RESÜSİTASYON TAKİBİ",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              Text(
+                'RESÜSİTASYON TAKİBİ',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: theme.textTheme.titleLarge?.color,
+                ),
               ),
               Text(
                 "Hedef Oran: ${settings.use211Ratio ? '2:1:1' : '1:1:1'}",
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(color: theme.textTheme.bodyMedium?.color),
               ),
               const SizedBox(height: 8),
               _buildProductCounter(
-                "ES (Eritrosit)",
+                'ES (Eritrosit)',
                 provider.prbcCount,
                 AppTheme.prbcColor,
                 () => provider.addProduct('ES'),
                 () => provider.removeProduct('ES'),
               ),
               _buildProductCounter(
-                "TDP (Plazma)",
+                'TDP (Plazma)',
                 provider.ffpCount,
                 AppTheme.ffpColor,
                 () => provider.addProduct('TDP'),
                 () => provider.removeProduct('TDP'),
               ),
               _buildProductCounter(
-                "TSP (Trombosit)",
+                'TSP (Trombosit)',
                 provider.pltCount,
                 AppTheme.pltColor,
                 () => provider.addProduct('TSP'),
                 () => provider.removeProduct('TSP'),
               ),
               _buildProductCounter(
-                "KRİYO/FİBRİNOJEN",
+                'KRİYO/FİBRİNOJEN',
                 provider.cryoCount,
                 Colors.purple[300]!,
                 () => provider.addProduct('KRİYO'),
                 () => provider.removeProduct('KRİYO'),
               ),
-
               const SizedBox(height: 24),
-              // Module 5: POC Integration
-              const Text(
-                "Ek Yatak Başı Test (POC) Değerleri",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              Text(
+                'Ek Yatak Başı Test (POC) Değerleri',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: theme.textTheme.titleLarge?.color,
+                ),
               ),
               const SizedBox(height: 8),
               _buildPOCArea(provider),
-
               const SizedBox(height: 32),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[800],
+                  backgroundColor: isDark
+                      ? Colors.grey[800]
+                      : const Color(0xFF44566C),
+                  foregroundColor: Colors.white,
                 ),
                 onPressed: () => _handleStopMTP(context, provider),
                 child: const Text("MTP'Yİ DURDUR / SONLANDIR"),
@@ -220,7 +230,7 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
     if (warning == null) return const SizedBox.shrink();
 
     return Card(
-      color: AppTheme.warningOrange.withOpacity(0.8),
+      color: AppTheme.warningOrange.withOpacity(0.85),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
@@ -246,7 +256,10 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
     );
   }
 
-  Widget _buildTimersArea() {
+  Widget _buildTimersArea(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     // 3 hours = 10800 seconds
     int txaRemaining = 10800 - _txaSecondsElapsed;
     if (txaRemaining < 0) txaRemaining = 0;
@@ -255,21 +268,25 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
       final h = seconds ~/ 3600;
       final m = (seconds % 3600) ~/ 60;
       final s = seconds % 60;
-      return "${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}";
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
     }
 
+    final panelColor = isDark ? Colors.blueGrey[900]! : const Color(0xFFEAF2FB);
+    final primaryText = isDark ? Colors.white : AppTheme.lightTextColor;
+    final secondaryText = isDark ? Colors.white70 : AppTheme.lightSubTextColor;
+
     return Card(
-      color: Colors.blueGrey[900],
+      color: panelColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    "TXA Penceresi (İlk 3 Saat):",
-                    style: TextStyle(fontSize: 16),
+                    'TXA Penceresi (İlk 3 Saat):',
+                    style: TextStyle(fontSize: 16, color: primaryText),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -284,18 +301,18 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            const Row(
+            Row(
               children: [
                 Expanded(
                   child: Text(
-                    "Hipotermi Kontrolü:",
-                    style: TextStyle(fontSize: 16),
+                    'Hipotermi Kontrolü:',
+                    style: TextStyle(fontSize: 16, color: primaryText),
                   ),
                 ),
-                SizedBox(width: 12),
-                Flexible(
+                const SizedBox(width: 12),
+                const Flexible(
                   child: Text(
-                    "VÜCUT ISISI > 37°C TUTUN",
+                    'VÜCUT ISISI > 37°C TUTUN',
                     textAlign: TextAlign.end,
                     maxLines: 2,
                     softWrap: true,
@@ -310,12 +327,12 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
               ],
             ),
             const SizedBox(height: 4),
-            const Align(
+            Align(
               alignment: Alignment.centerRight,
               child: Text(
-                "(Hedef normotermi)",
+                '(Hedef normotermi)',
                 textAlign: TextAlign.end,
-                style: TextStyle(fontSize: 12, color: Colors.white70),
+                style: TextStyle(fontSize: 12, color: secondaryText),
               ),
             ),
           ],
@@ -331,8 +348,14 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
     VoidCallback onAdd,
     VoidCallback onRemove,
   ) {
+    final theme = Theme.of(context);
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.4)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
@@ -342,9 +365,10 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 20,
+                style: TextStyle(
+                  fontSize: 19,
                   fontWeight: FontWeight.bold,
+                  color: theme.textTheme.titleLarge?.color,
                 ),
               ),
             ),
@@ -353,7 +377,7 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
                 IconButton(
                   icon: const Icon(Icons.remove_circle_outline),
                   onPressed: onRemove,
-                  color: Colors.white54,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                   iconSize: 32,
                 ),
                 SizedBox(
@@ -361,9 +385,10 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
                   child: Text(
                     count.toString(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: theme.textTheme.titleLarge?.color,
                     ),
                   ),
                 ),
@@ -394,8 +419,9 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
               border: OutlineInputBorder(),
             ),
             onChanged: (val) {
-              if (double.tryParse(val) != null)
+              if (double.tryParse(val) != null) {
                 provider.updatePOC(double.parse(val), provider.ptInr);
+              }
             },
           ),
         ),
@@ -408,8 +434,9 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
               border: OutlineInputBorder(),
             ),
             onChanged: (val) {
-              if (double.tryParse(val) != null)
+              if (double.tryParse(val) != null) {
                 provider.updatePOC(provider.rotumExTemCa5, double.parse(val));
+              }
             },
           ),
         ),
@@ -421,21 +448,21 @@ class _ActiveMTPScreenState extends State<ActiveMTPScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("MTP Durdurulsun mu?"),
+        title: const Text('MTP Durdurulsun mu?'),
         content: const Text(
-          "Vakayı sonlandırıp özet ekranına gitmek istediğinize emin misiniz? (Loglar bu vaka için kapatılacaktır.)",
+          'Vakayı sonlandırıp özet ekranına gitmek istediğinize emin misiniz? (Loglar bu vaka için kapatılacaktır.)',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("İPTAL"),
+            child: const Text('İPTAL'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog
               Navigator.pushReplacementNamed(context, '/summary');
             },
-            child: const Text("SONLANDIR VE ÖZETİ GÖR"),
+            child: const Text('SONLANDIR VE ÖZETİ GÖR'),
           ),
         ],
       ),

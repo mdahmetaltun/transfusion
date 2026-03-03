@@ -56,6 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(
@@ -77,101 +79,125 @@ class _LoginScreenState extends State<LoginScreen> {
                     ? 'MTP Bulut Sistemi\nGiriş'
                     : 'MTP Bulut Sistemi\nKayıt Ol',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.textTheme.headlineMedium?.color,
                 ),
               ),
               const SizedBox(height: 48),
-
               if (authService.isLoading)
                 const Center(child: CircularProgressIndicator())
               else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.dividerTheme.color ?? Colors.transparent,
                     ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Şifre',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock),
+                    boxShadow: [
+                      if (!isDark)
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.email),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
                       ),
-                      obscureText: true,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _passwordController,
+                        decoration: const InputDecoration(
+                          labelText: 'Şifre',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.lock),
+                        ),
+                        obscureText: true,
                       ),
-                      onPressed: () => _submit(authService),
-                      child: Text(
-                        _isLogin ? 'GİRİŞ YAP' : 'KAYIT OL',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed: () => _submit(authService),
+                        child: Text(
+                          _isLogin ? 'GİRİŞ YAP' : 'KAYIT OL',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _isLogin = !_isLogin;
-                        });
-                      },
-                      child: Text(
-                        _isLogin
-                            ? 'Hesabın yok mu? Kayıt Ol'
-                            : 'Zaten hesabın var mı? Giriş Yap',
-                        style: const TextStyle(color: Colors.white70),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _isLogin = !_isLogin;
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.primary,
+                        ),
+                        child: Text(
+                          _isLogin
+                              ? 'Hesabın yok mu? Kayıt Ol'
+                              : 'Zaten hesabın var mı? Giriş Yap',
+                        ),
                       ),
-                    ),
-                    const Divider(color: Colors.white24, height: 48),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      Divider(
+                        color: theme.dividerTheme.color,
+                        height: 48,
                       ),
-                      onPressed: () async {
-                        try {
-                          await authService.signInWithGoogle();
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Giriş Hatası: $e',
-                                style: const TextStyle(color: Colors.white),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.surface,
+                          foregroundColor: theme.colorScheme.onSurface,
+                          side: BorderSide(color: theme.colorScheme.outline),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                        ),
+                        onPressed: () async {
+                          try {
+                            await authService.signInWithGoogle();
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Giriş Hatası: $e',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                                backgroundColor: AppTheme.alertRed,
                               ),
-                              backgroundColor: AppTheme.alertRed,
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.login),
-                      label: const Text(
-                        "Google ile Devam Et",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.login),
+                        label: const Text(
+                          'Google ile Devam Et',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
             ],
           ),

@@ -23,19 +23,19 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
   void _exportAndFinish(MtpStateProvider provider) {
     // Generate text dump of the case
     final buffer = StringBuffer();
-    buffer.writeln("=== MTP VAKA ÖZETİ ===");
-    buffer.writeln("Vaka ID: ${provider.currentCaseId ?? 'Bilinmiyor'}");
-    buffer.writeln("Lokasyon: ${provider.caseLocation ?? 'Bilinmiyor'}");
-    buffer.writeln("Tarih: ${DateTime.now().toString()}");
-    buffer.writeln("Klinik Not: ${_notesController.text}");
-    buffer.writeln("-----------------------");
-    buffer.writeln("TOPLAM VERİLEN ÜRÜNLER:");
-    buffer.writeln("Eritrosit (ES): ${provider.prbcCount}");
-    buffer.writeln("Plazma (TDP): ${provider.ffpCount}");
-    buffer.writeln("Trombosit (TSP): ${provider.pltCount}");
-    buffer.writeln("Kriyo/Fibrinojen: ${provider.cryoCount}");
-    buffer.writeln("-----------------------");
-    buffer.writeln("OLAY LOGLARI (EVENT SOURCING):");
+    buffer.writeln('=== MTP VAKA ÖZETİ ===');
+    buffer.writeln('Vaka ID: ${provider.currentCaseId ?? 'Bilinmiyor'}');
+    buffer.writeln('Lokasyon: ${provider.caseLocation ?? 'Bilinmiyor'}');
+    buffer.writeln('Tarih: ${DateTime.now().toString()}');
+    buffer.writeln('Klinik Not: ${_notesController.text}');
+    buffer.writeln('-----------------------');
+    buffer.writeln('TOPLAM VERİLEN ÜRÜNLER:');
+    buffer.writeln('Eritrosit (ES): ${provider.prbcCount}');
+    buffer.writeln('Plazma (TDP): ${provider.ffpCount}');
+    buffer.writeln('Trombosit (TSP): ${provider.pltCount}');
+    buffer.writeln('Kriyo/Fibrinojen: ${provider.cryoCount}');
+    buffer.writeln('-----------------------');
+    buffer.writeln('OLAY LOGLARI (EVENT SOURCING):');
     for (var event in provider.events) {
       buffer.writeln(event.toString());
     }
@@ -56,11 +56,12 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<MtpStateProvider>(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Vaka Özeti ve Dışa Aktar"),
-        backgroundColor: Colors.blueGrey[900],
+        title: const Text('Vaka Özeti ve Dışa Aktar'),
         automaticallyImplyLeading: false,
       ),
       body: Padding(
@@ -74,59 +75,67 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
               color: AppTheme.okGreen,
             ),
             const SizedBox(height: 16),
-            const Text(
-              "MTP VAKASI SONLANDIRILDI",
+            Text(
+              'MTP VAKASI SONLANDIRILDI',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: theme.textTheme.headlineMedium?.color,
               ),
             ),
             const SizedBox(height: 24),
-
             Card(
-              color: Colors.black26,
+              color: isDark ? Colors.black26 : AppTheme.lightSurfaceAltColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isDark ? Colors.transparent : theme.colorScheme.outline,
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
                     Text(
                       "Harekete Geçilen Vaka: ${provider.currentCaseId ?? 'TRM-XX'}",
-                      style: const TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Toplam Verilen Ürün: ${provider.totalProductsGiven}",
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: theme.textTheme.bodyMedium?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "ES: ${provider.prbcCount} | TDP: ${provider.ffpCount} | TSP: ${provider.pltCount} | KRIYO: ${provider.cryoCount}",
-                      style: const TextStyle(fontSize: 16),
+                      'Toplam Verilen Ürün: ${provider.totalProductsGiven}',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.titleLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'ES: ${provider.prbcCount} | TDP: ${provider.ffpCount} | TSP: ${provider.pltCount} | KRIYO: ${provider.cryoCount}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
             TextField(
               controller: _notesController,
               maxLines: 4,
               decoration: const InputDecoration(
-                labelText:
-                    "Klinik Not / Süreç Hakkında Serbest Metin (Opsiyonel)",
+                labelText: 'Klinik Not / Süreç Hakkında Serbest Metin (Opsiyonel)',
                 border: OutlineInputBorder(),
                 alignLabelWithHint: true,
               ),
             ),
-
             const Spacer(),
-
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
@@ -135,7 +144,7 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
               onPressed: () => _exportAndFinish(provider),
               icon: const Icon(Icons.share),
               label: const Text(
-                "LOGLARI DIŞA AKTAR VE BAŞA DÖN",
+                'LOGLARI DIŞA AKTAR VE BAŞA DÖN',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
