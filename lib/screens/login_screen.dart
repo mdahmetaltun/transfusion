@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -22,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _submit(AuthService authService) async {
+  void _submitEmailPassword(AuthService authService) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -53,12 +54,148 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle(AuthService authService) async {
+    try {
+      await authService.signInWithGoogle();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Giriş Hatası: $e',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppTheme.alertRed,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Web'de sadece Google Sign-In göster
+    if (kIsWeb) {
+      return _buildWebLoginScreen(authService, theme, isDark);
+    }
+
+    // Mobil: mevcut email/password + Google Sign-In
+    return _buildMobileLoginScreen(authService, theme, isDark);
+  }
+
+  Widget _buildWebLoginScreen(
+    AuthService authService,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Image.asset(
+                    'assets/images/flutter_mark.png',
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'MTP Yönetim Paneli',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.headlineMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Yalnızca yetkili yöneticiler giriş yapabilir.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  if (authService.isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.dividerTheme.color ?? Colors.transparent,
+                        ),
+                        boxShadow: [
+                          if (!isDark)
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.07),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () => _signInWithGoogle(authService),
+                            icon: const Icon(Icons.login, size: 22),
+                            label: const Text(
+                              'Google Hesabıyla Giriş Yap',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Erişim için önce yöneticinizden yetkilendirme almanız gerekmektedir.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.textTheme.bodySmall?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLoginScreen(
+    AuthService authService,
+    ThemeData theme,
+    bool isDark,
+  ) {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -135,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           backgroundColor: AppTheme.primaryColor,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        onPressed: () => _submit(authService),
+                        onPressed: () => _submitEmailPassword(authService),
                         child: Text(
                           _isLogin ? 'GİRİŞ YAP' : 'KAYIT OL',
                           style: const TextStyle(
@@ -169,22 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: 0,
                         ),
-                        onPressed: () async {
-                          try {
-                            await authService.signInWithGoogle();
-                          } catch (e) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Giriş Hatası: $e',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                backgroundColor: AppTheme.alertRed,
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: () => _signInWithGoogle(authService),
                         icon: const Icon(Icons.login),
                         label: const Text(
                           'Google ile Devam Et',

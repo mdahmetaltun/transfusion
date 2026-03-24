@@ -8,7 +8,7 @@ class SettingsModel {
   int txaWindowHours; // Default 3
 
   SettingsModel({
-    this.bloodBankPhone = '1122',
+    this.bloodBankPhone = '905413817331',
     this.use211Ratio = false, // 1:1:1 is the standard for MTP usually
     this.calciumUnitThreshold = 4,
     this.txaWindowHours = 3,
@@ -26,7 +26,7 @@ class AdminSettingsProvider extends ChangeNotifier {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     _settings = SettingsModel(
-      bloodBankPhone: prefs.getString('bloodBankPhone') ?? '1122',
+      bloodBankPhone: prefs.getString('bloodBankPhone') ?? '905413817331',
       use211Ratio: prefs.getBool('use211Ratio') ?? false,
       calciumUnitThreshold: prefs.getInt('calciumUnitThreshold') ?? 4,
       txaWindowHours: prefs.getInt('txaWindowHours') ?? 3,

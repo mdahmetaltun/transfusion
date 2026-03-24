@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -5,21 +6,36 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 import 'core/theme.dart';
+import 'core/app_routes.dart';
 import 'providers/mtp_state_provider.dart';
 import 'providers/admin_settings_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/blood_product_provider.dart';
 import 'services/auth_service.dart';
 import 'screens/auth_wrapper.dart';
 import 'screens/splash_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/admin_screen.dart';
+import 'screens/admin_user_management_screen.dart';
 import 'screens/assessment_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/end_case_screen.dart';
+import 'screens/mtp_history_screen.dart';
+import 'screens/blood_product_screen.dart';
+import 'screens/lethal_triad_screen.dart';
+import 'screens/teg_rotem_screen.dart';
+import 'screens/reversal_guide_screen.dart';
+import 'screens/dosing_calculator_screen.dart';
+import 'screens/shift_handover_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    if (kDebugMode) print('Flutter Error: ${details.exceptionAsString()}');
+  };
 
   runApp(
     MultiProvider(
@@ -28,6 +44,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => MtpStateProvider()),
         ChangeNotifierProvider(create: (_) => AdminSettingsProvider()),
+        ChangeNotifierProvider(create: (ctx) => BloodProductProvider()),
       ],
       child: const TransfusionMTPApp(),
     ),
@@ -47,15 +64,24 @@ class TransfusionMTPApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
           debugShowCheckedModeBanner: false,
-          initialRoute: '/auth',
+          initialRoute: AppRoutes.auth,
           routes: {
-            '/auth': (context) => const AuthWrapper(),
-            '/splash': (context) => const SplashScreen(),
-            '/profile': (context) => const ProfileScreen(),
-            '/admin': (context) => const AdminScreen(),
-            '/assessment': (context) => const PatientAssessmentScreen(),
-            '/dashboard': (context) => const ActiveMTPScreen(),
-            '/summary': (context) => const EndCaseScreen(),
+            AppRoutes.auth: (context) => const AuthWrapper(),
+            AppRoutes.splash: (context) => const SplashScreen(),
+            AppRoutes.profile: (context) => const ProfileScreen(),
+            AppRoutes.admin: (context) => const AdminScreen(),
+            AppRoutes.adminUsers: (context) =>
+                const AdminUserManagementScreen(),
+            AppRoutes.assessment: (context) => const PatientAssessmentScreen(),
+            AppRoutes.dashboard: (context) => const ActiveMTPScreen(),
+            AppRoutes.summary: (context) => const EndCaseScreen(),
+            AppRoutes.history: (context) => const MtpHistoryScreen(),
+            AppRoutes.bloodProducts: (context) => const BloodProductScreen(),
+            AppRoutes.lethalTriad: (context) => const LethalTriadScreen(),
+            AppRoutes.tegRotem: (context) => const TegRotemScreen(),
+            AppRoutes.reversalGuide: (context) => const ReversalGuideScreen(),
+            AppRoutes.dosingCalc: (context) => const DosingCalculatorScreen(),
+            AppRoutes.shiftHandover: (context) => const ShiftHandoverScreen(),
           },
         );
       },

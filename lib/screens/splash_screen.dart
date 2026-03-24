@@ -21,11 +21,25 @@ class SplashScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Image.asset(
-                  'assets/images/flutter_mark.png',
-                  width: 84,
-                  height: 84,
-                  fit: BoxFit.contain,
+                // Medical icon instead of Flutter logo
+                Center(
+                  child: Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppTheme.alertRed,
+                        width: 3,
+                      ),
+                      color: AppTheme.alertRed.withValues(alpha: 0.08),
+                    ),
+                    child: const Icon(
+                      Icons.bloodtype,
+                      size: 48,
+                      color: AppTheme.alertRed,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -36,6 +50,25 @@ class SplashScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: theme.textTheme.headlineMedium?.color,
                   ),
+                ),
+                // User greeting
+                Consumer<AuthService>(
+                  builder: (context, auth, _) {
+                    final profile = auth.currentUserProfile;
+                    if (profile == null) return const SizedBox.shrink();
+                    final roleLabel = _roleDisplayName(profile.role);
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'Hoş geldiniz, ${profile.displayName} ($roleLabel)',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 36),
                 Card(
@@ -119,6 +152,21 @@ class SplashScreen extends StatelessWidget {
                     ),
                     TextButton.icon(
                       onPressed: () {
+                        Navigator.pushNamed(context, '/history');
+                      },
+                      icon: Icon(
+                        Icons.history,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                      label: Text(
+                        'MTP Kayıtları',
+                        style: TextStyle(
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
                         final authService = Provider.of<AuthService>(
                           context,
                           listen: false,
@@ -157,5 +205,18 @@ class SplashScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _roleDisplayName(UserRole role) {
+    switch (role) {
+      case UserRole.DOCTOR:
+        return 'Hekim';
+      case UserRole.NURSE:
+        return 'Hemşire';
+      case UserRole.ADMIN:
+        return 'Admin';
+      case UserRole.BLOOD_BANK:
+        return 'Kan Bankası';
+    }
   }
 }

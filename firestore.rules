@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Super admin email
+    function isSuperAdmin() {
+      return request.auth != null &&
+        request.auth.token.email == 'md.ahmetaltun.38@gmail.com';
+    }
+
+    // Users collection'dan role kontrolü
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return request.auth != null && (
+        isSuperAdmin() ||
+        getUserRole() == 'ADMIN'
+      );
+    }
+
+    // approved_admins listesinde mi?
+    function isApprovedAdmin() {
+      return request.auth != null && (
+        isSuperAdmin() ||
+        exists(/databases/$(database)/documents/approved_admins/$(request.auth.token.email))
+      );
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // ── approved_admins ──────────────────────────────────────────────────────
+    match /approved_admins/{email} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isApprovedAdmin();
+    }
+
+    // ── approved_users ───────────────────────────────────────────────────────
+    match /approved_users/{email} {
+      // Kullanıcı kendi kaydını okuyabilir (login sırasında kontrol için)
+      // ve silebilir (profil oluşturunca temizler)
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() || isApprovedAdmin();
+      allow delete: if isAdmin() || isApprovedAdmin() ||
+        request.auth.token.email == email;
+    }
+
+    // ── users ────────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+      allow write: if request.auth.uid == uid || isAdmin() || isApprovedAdmin();
+    }
+
+    // ── cases ────────────────────────────────────────────────────────────────
+    match /cases/{caseId} {
+      allow read, write: if isAuthenticated();
+
+      match /events/{eventId} {
+        allow read, write: if isAuthenticated();
+      }
+
+      match /blood_products/{productId} {
+        allow read, write: if isAuthenticated();
+      }
+
+      match /lethal_triad/{recordId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+  }
+}

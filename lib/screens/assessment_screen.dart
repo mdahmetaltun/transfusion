@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/theme.dart';
 import '../models/patient_assessment.dart';
+import '../models/blood_product_unit.dart';
 import '../providers/mtp_state_provider.dart';
+import '../services/auth_service.dart';
 
 class PatientAssessmentScreen extends StatefulWidget {
   const PatientAssessmentScreen({super.key});
@@ -63,7 +66,20 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    provider.startNewCase(selectedLocation);
+                    final authService = Provider.of<AuthService>(
+                      context,
+                      listen: false,
+                    );
+                    provider.startNewCase(
+                      selectedLocation,
+                      uid:
+                          authService.currentFirebaseUser?.uid ??
+                          authService.currentUserProfile?.uid ??
+                          'UNKNOWN',
+                      facilityId:
+                          authService.currentUserProfile?.facilityId ??
+                          'UNKNOWN',
+                    );
                   },
                   child: const Text("VAKAYI BAŞLAT"),
                 ),
@@ -89,58 +105,181 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
         builder: (context, provider, child) {
           final patient = provider.currentPatient;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
+          return Column(
             children: [
-              _buildSectionHeader(
-                context,
-                'Hayati Bulgular (ABC Skoru İçin)',
-                Icons.favorite,
+              // Always-visible ABC score strip
+              _buildAbcScoreStrip(context, provider),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _buildSectionHeader(
+                      context,
+                      'Hayati Bulgular (ABC Skoru İçin)',
+                      Icons.favorite,
+                    ),
+                    _buildSliderRow(
+                      context,
+                      provider,
+                      "Nabız (Kalp Hızı)",
+                      Icons.monitor_heart,
+                      patient.heartRate.toDouble(),
+                      40,
+                      200,
+                      160,
+                      "dk",
+                      (val) => provider.updateVitals(hr: val.toInt()),
+                    ),
+                    _buildSliderRow(
+                      context,
+                      provider,
+                      "Sistolik Kan Basıncı (SKB)",
+                      Icons.bloodtype,
+                      patient.systolicBp.toDouble(),
+                      40,
+                      220,
+                      180,
+                      "mmHg",
+                      (val) => provider.updateVitals(sbp: val.toInt()),
+                    ),
+
+                    const SizedBox(height: 8),
+                    _buildFastRow(context, provider),
+
+                    const SizedBox(height: 16),
+
+                    _buildSectionHeader(
+                      context,
+                      'Travma Tipi',
+                      Icons.personal_injury,
+                    ),
+                    _buildMechanismSelector(context, provider),
+
+                    const SizedBox(height: 16),
+                    _buildPatientInfoSection(context, provider),
+
+                    const SizedBox(height: 24),
+                    Divider(color: Theme.of(context).dividerTheme.color),
+
+                    // Module 2: Pre-Decision
+                    if (patient.preDecision == null)
+                      _buildPreDecisionCard(context, provider)
+                    else
+                      _buildAIDiscussionArea(context, provider),
+                  ],
+                ),
               ),
-              _buildSliderRow(
-                context,
-                "Nabız (Kalp Hızı)",
-                Icons.monitor_heart,
-                patient.heartRate.toDouble(),
-                40,
-                200,
-                "dk",
-                (val) => provider.updateVitals(hr: val.toInt()),
-              ),
-              _buildSliderRow(
-                context,
-                "Sistolik Kan Basıncı (SKB)",
-                Icons.bloodtype,
-                patient.systolicBp.toDouble(),
-                40,
-                220,
-                "mmHg",
-                (val) => provider.updateVitals(sbp: val.toInt()),
-              ),
-
-              const SizedBox(height: 8),
-              _buildFastRow(context, provider),
-
-              const SizedBox(height: 16),
-
-              _buildSectionHeader(
-                context,
-                'Travma Tipi',
-                Icons.personal_injury,
-              ),
-              _buildMechanismSelector(context, provider),
-
-              const SizedBox(height: 24),
-              Divider(color: Theme.of(context).dividerTheme.color),
-
-              // Module 2: Pre-Decision
-              if (patient.preDecision == null)
-                _buildPreDecisionCard(context, provider)
-              else
-                _buildAIDiscussionArea(context, provider),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildAbcScoreStrip(BuildContext context, MtpStateProvider provider) {
+    final patient = provider.currentPatient;
+    final score = patient.calculateABCScore();
+    final isHighRisk = score >= 2;
+
+    final stripBg = isHighRisk
+        ? AppTheme.alertRed.withValues(alpha: 0.12)
+        : AppTheme.okGreen.withValues(alpha: 0.10);
+    final stripBorder = isHighRisk
+        ? AppTheme.alertRed.withValues(alpha: 0.4)
+        : AppTheme.okGreen.withValues(alpha: 0.4);
+    final scoreColor = isHighRisk ? AppTheme.alertRed : AppTheme.okGreen;
+
+    final criteria = [
+      _CriterionPill(
+        label: 'KH≥120',
+        met: patient.heartRate >= 120,
+      ),
+      _CriterionPill(
+        label: 'SKB≤90',
+        met: patient.systolicBp <= 90,
+      ),
+      _CriterionPill(
+        label: 'FAST(+)',
+        met: patient.isFastPositive,
+      ),
+      _CriterionPill(
+        label: 'PENETRAN',
+        met: patient.mechanism == InjuryMechanism.penetrating,
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: stripBg,
+        border: Border(
+          bottom: BorderSide(color: stripBorder, width: 1.5),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          // Score badge
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: scoreColor,
+            ),
+            child: Center(
+              child: Text(
+                '$score/4',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Criterion pills
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: criteria.map((c) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: c.met
+                        ? AppTheme.alertRed
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    c.label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: c.met
+                          ? Colors.white
+                          : Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Risk label
+          Text(
+            isHighRisk ? 'YÜKSEK' : 'DÜŞÜK',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: scoreColor,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -171,15 +310,19 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
 
   Widget _buildSliderRow(
     BuildContext context,
+    MtpStateProvider provider,
     String title,
     IconData icon,
     double value,
     double min,
     double max,
+    int divisions,
     String unit,
-    Function(double) onChanged,
-  ) {
+    Function(double) onChanged, {
+    Function(double)? onChangeEnd,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final valueLabel = '${value.toStringAsFixed(0)} $unit';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -189,10 +332,15 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 380;
+                final titleColor = Theme.of(context).textTheme.bodyLarge?.color;
+                final valueColor = isDark
+                    ? AppTheme.warningOrange
+                    : Colors.orange[800];
+
+                final labelRow = Row(
                   children: [
                     Icon(
                       icon,
@@ -200,44 +348,149 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
                       size: 20,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: titleColor,
+                        ),
                       ),
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                );
+
+                // Value badge with edit icon
+                final valueBadge = GestureDetector(
+                  onTap: () => _showDirectEntryDialog(
+                    context,
+                    title,
+                    value,
+                    min,
+                    max,
+                    unit,
+                    onChanged,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${value.toStringAsFixed(0)} $unit',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark
-                          ? AppTheme.warningOrange
-                          : Colors.orange[800],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          valueLabel,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: valueColor,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.edit,
+                          size: 14,
+                          color: valueColor?.withValues(alpha: 0.7),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                );
+
+                if (isCompact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      labelRow,
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: valueBadge,
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: labelRow),
+                    const SizedBox(width: 12),
+                    valueBadge,
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 8),
-            Slider(value: value, min: min, max: max, onChanged: onChanged),
+            Slider(
+              value: value,
+              min: min,
+              max: max,
+              divisions: divisions,
+              label: '${value.toStringAsFixed(0)} $unit',
+              onChanged: onChanged,
+              onChangeEnd: onChangeEnd,
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _showDirectEntryDialog(
+    BuildContext context,
+    String title,
+    double currentValue,
+    double min,
+    double max,
+    String unit,
+    Function(double) onChanged,
+  ) async {
+    final controller = TextEditingController(
+      text: currentValue.toStringAsFixed(0),
+    );
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: InputDecoration(
+            suffixText: unit,
+            labelText: '${min.toInt()} – ${max.toInt()}',
+            border: const OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('İPTAL'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final parsed = double.tryParse(controller.text);
+              if (parsed != null && parsed >= min && parsed <= max) {
+                onChanged(parsed);
+                Navigator.pop(dialogContext);
+              }
+            },
+            child: const Text('TAMAM'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
   }
 
   Widget _buildFastRow(BuildContext context, MtpStateProvider provider) {
@@ -355,11 +608,19 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
     );
   }
 
+  Widget _buildPatientInfoSection(
+    BuildContext context,
+    MtpStateProvider provider,
+  ) {
+    return _PatientInfoExpansionCard(provider: provider);
+  }
+
   Widget _buildPreDecisionCard(
     BuildContext context,
     MtpStateProvider provider,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final score = provider.currentPatient.calculateABCScore();
 
     return Card(
       color: isDark ? const Color(0xFF263238) : Colors.blue[50],
@@ -390,7 +651,7 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              "Klinik önsezinize göre MTP'yi aktive etmeyi düşünüyor musunuz?",
+              'ABC Skoru: $score/4\nKlinik önsezinize göre MTP\'yi aktive etmeyi düşünüyor musunuz?',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -491,40 +752,78 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
     return Column(
       children: [
         Card(
-          color: riskColor.withOpacity(isDark ? 0.2 : 0.1),
+          color: riskColor.withValues(alpha: isDark ? 0.2 : 0.1),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: riskColor.withOpacity(0.5), width: 2),
+            side: BorderSide(color: riskColor.withValues(alpha: 0.5), width: 2),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(riskIcon, color: riskColor, size: 28),
-                    const SizedBox(width: 8),
-                    Text(
-                      "ABC Skoru:",
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 430;
+                final scoreText = Text(
                   riskLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: riskColor,
                   ),
-                ),
-              ],
+                );
+
+                final titleRow = Row(
+                  children: [
+                    Icon(riskIcon, color: riskColor, size: 28),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "ABC Skoru:",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+
+                if (isCompact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      titleRow,
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: scoreText,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: titleRow),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: scoreText,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -620,4 +919,189 @@ class _PatientAssessmentScreenState extends State<PatientAssessmentScreen> {
       );
     }
   }
+}
+
+class _PatientInfoExpansionCard extends StatefulWidget {
+  final MtpStateProvider provider;
+
+  const _PatientInfoExpansionCard({required this.provider});
+
+  @override
+  State<_PatientInfoExpansionCard> createState() =>
+      _PatientInfoExpansionCardState();
+}
+
+class _PatientInfoExpansionCardState extends State<_PatientInfoExpansionCard> {
+  bool _expanded = false;
+  double _weight = 70.0;
+  BloodGroup _bloodGroup = BloodGroup.unknown;
+  RhFactor _rhFactor = RhFactor.unknown;
+
+  @override
+  void initState() {
+    super.initState();
+    _weight = widget.provider.patientWeightKg ?? 70.0;
+    _bloodGroup = widget.provider.patientBloodGroup;
+    _rhFactor = widget.provider.patientRhFactor;
+  }
+
+  String _bloodGroupLabel(BloodGroup bg) {
+    switch (bg) {
+      case BloodGroup.A:
+        return 'A';
+      case BloodGroup.B:
+        return 'B';
+      case BloodGroup.AB:
+        return 'AB';
+      case BloodGroup.O:
+        return 'O';
+      case BloodGroup.unknown:
+        return 'Bilinmiyor';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.person_outline, color: AppTheme.primaryColor),
+            title: const Text(
+              'Hasta Bilgileri (Opsiyonel)',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: widget.provider.patientWeightKg != null
+                ? Text(
+                    '${widget.provider.patientWeightKg!.toStringAsFixed(0)} kg · '
+                    '${_bloodGroupLabel(widget.provider.patientBloodGroup)}'
+                    '${widget.provider.patientRhFactor == RhFactor.positive ? ' Rh+' : widget.provider.patientRhFactor == RhFactor.negative ? ' Rh-' : ''}',
+                    style: TextStyle(
+                        color: theme.textTheme.bodyMedium?.color, fontSize: 12),
+                  )
+                : null,
+            trailing: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+            onTap: () => setState(() => _expanded = !_expanded),
+          ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(),
+                  // Weight
+                  Row(
+                    children: [
+                      const Icon(Icons.monitor_weight, size: 18,
+                          color: AppTheme.primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Kilo: ${_weight.toStringAsFixed(0)} kg',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  Slider(
+                    value: _weight.clamp(20, 200),
+                    min: 20,
+                    max: 200,
+                    divisions: 180,
+                    label: '${_weight.toStringAsFixed(0)} kg',
+                    onChanged: (v) {
+                      setState(() => _weight = v);
+                      widget.provider.updatePatientInfo(weight: v);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Blood group
+                  const Text('Kan Grubu',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: BloodGroup.values.map((bg) {
+                      return ChoiceChip(
+                        label: Text(_bloodGroupLabel(bg)),
+                        selected: _bloodGroup == bg,
+                        onSelected: (s) {
+                          if (s) {
+                            setState(() => _bloodGroup = bg);
+                            widget.provider.updatePatientInfo(bloodGroup: bg);
+                          }
+                        },
+                        selectedColor: AppTheme.primaryColor,
+                        labelStyle: TextStyle(
+                          color: _bloodGroup == bg ? Colors.white : null,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Rh factor
+                  const Text('Rh Faktörü',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Rh+'),
+                        selected: _rhFactor == RhFactor.positive,
+                        onSelected: (s) {
+                          if (s) {
+                            setState(() => _rhFactor = RhFactor.positive);
+                            widget.provider
+                                .updatePatientInfo(rhFactor: RhFactor.positive);
+                          }
+                        },
+                        selectedColor: AppTheme.primaryColor,
+                        labelStyle: TextStyle(
+                          color: _rhFactor == RhFactor.positive
+                              ? Colors.white
+                              : null,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Rh-'),
+                        selected: _rhFactor == RhFactor.negative,
+                        onSelected: (s) {
+                          if (s) {
+                            setState(() => _rhFactor = RhFactor.negative);
+                            widget.provider
+                                .updatePatientInfo(rhFactor: RhFactor.negative);
+                          }
+                        },
+                        selectedColor: AppTheme.primaryColor,
+                        labelStyle: TextStyle(
+                          color: _rhFactor == RhFactor.negative
+                              ? Colors.white
+                              : null,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CriterionPill {
+  final String label;
+  final bool met;
+
+  const _CriterionPill({required this.label, required this.met});
 }

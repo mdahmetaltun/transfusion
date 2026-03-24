@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../core/app_routes.dart';
 import '../core/theme.dart';
 import '../providers/admin_settings_provider.dart';
+import '../services/auth_service.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -158,6 +161,65 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
             onPressed: _saveSettings,
           ),
+          if (kIsWeb) ...[
+            Divider(height: 48, color: theme.dividerTheme.color),
+            const Text(
+              'Yönetici Hesapları',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Web paneline erişebilecek yönetici hesaplarını buradan yönetin.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            Builder(
+              builder: (ctx) {
+                final authService =
+                    Provider.of<AuthService>(ctx, listen: false);
+                return ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.manage_accounts),
+                  label: const Text(
+                    'YÖNETİCİ KULLANICILARI',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: authService.isSuperAdmin
+                      ? () =>
+                          Navigator.pushNamed(ctx, AppRoutes.adminUsers)
+                      : null,
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            Builder(
+              builder: (ctx) {
+                final authService =
+                    Provider.of<AuthService>(ctx, listen: false);
+                if (!authService.isSuperAdmin) {
+                  return Text(
+                    'Yönetici hesaplarını yalnızca Süper Admin yönetebilir.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.textTheme.bodySmall?.color,
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
         ],
       ),
     );

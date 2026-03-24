@@ -128,6 +128,28 @@ class ProductPayload implements EventPayload {
   };
 }
 
+class ChecklistPayload implements EventPayload {
+  final String productType;
+  final int completedSteps;
+  final int totalSteps;
+  final String status;
+
+  ChecklistPayload({
+    required this.productType,
+    required this.completedSteps,
+    required this.totalSteps,
+    required this.status,
+  });
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'productType': productType,
+    'completedSteps': completedSteps,
+    'totalSteps': totalSteps,
+    'status': status,
+  };
+}
+
 class AlertPayload implements EventPayload {
   final String alertId;
   final String message;

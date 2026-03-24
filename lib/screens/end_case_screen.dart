@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../core/theme.dart';
+import '../models/patient_assessment.dart';
 import '../providers/mtp_state_provider.dart';
+import '../providers/admin_settings_provider.dart';
 
 class EndCaseScreen extends StatefulWidget {
   const EndCaseScreen({super.key});
@@ -14,39 +15,61 @@ class EndCaseScreen extends StatefulWidget {
 class _EndCaseScreenState extends State<EndCaseScreen> {
   final _notesController = TextEditingController();
 
+  // Snapshot of provider state captured before closeCase clears it
+  String _caseId = '…';
+  String _location = '…';
+  int _abcScore = 0;
+  bool _hrMet = false;
+  bool _sbpMet = false;
+  bool _fastMet = false;
+  bool _penetratingMet = false;
+  int _prbcCount = 0;
+  int _ffpCount = 0;
+  int _pltCount = 0;
+  int _cryoCount = 0;
+  int _totalProducts = 0;
+  String _mtpDuration = '00:00:00';
+  String _ratioDisplay = '—';
+  bool _use211 = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Snapshot all summary data before closeCase clears provider state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final provider = Provider.of<MtpStateProvider>(context, listen: false);
+      final settings =
+          Provider.of<AdminSettingsProvider>(context, listen: false).settings;
+      final patient = provider.currentPatient;
+
+      setState(() {
+        _caseId = provider.currentCaseId ?? 'TRM-XX';
+        _location = provider.caseLocation ?? '—';
+        _abcScore = patient.calculateABCScore();
+        _hrMet = patient.heartRate >= 120;
+        _sbpMet = patient.systolicBp <= 90;
+        _fastMet = patient.isFastPositive;
+        _penetratingMet = patient.mechanism == InjuryMechanism.penetrating;
+        _prbcCount = provider.prbcCount;
+        _ffpCount = provider.ffpCount;
+        _pltCount = provider.pltCount;
+        _cryoCount = provider.cryoCount;
+        _totalProducts = provider.totalProductsGiven;
+        _mtpDuration = provider.mtpDurationFormatted;
+        _ratioDisplay = provider.currentRatioDisplay;
+        _use211 = settings.use211Ratio;
+      });
+    });
+  }
+
   @override
   void dispose() {
     _notesController.dispose();
     super.dispose();
   }
 
-  void _exportAndFinish(MtpStateProvider provider) {
-    // Generate text dump of the case
-    final buffer = StringBuffer();
-    buffer.writeln('=== MTP VAKA ÖZETİ ===');
-    buffer.writeln('Vaka ID: ${provider.currentCaseId ?? 'Bilinmiyor'}');
-    buffer.writeln('Lokasyon: ${provider.caseLocation ?? 'Bilinmiyor'}');
-    buffer.writeln('Tarih: ${DateTime.now().toString()}');
-    buffer.writeln('Klinik Not: ${_notesController.text}');
-    buffer.writeln('-----------------------');
-    buffer.writeln('TOPLAM VERİLEN ÜRÜNLER:');
-    buffer.writeln('Eritrosit (ES): ${provider.prbcCount}');
-    buffer.writeln('Plazma (TDP): ${provider.ffpCount}');
-    buffer.writeln('Trombosit (TSP): ${provider.pltCount}');
-    buffer.writeln('Kriyo/Fibrinojen: ${provider.cryoCount}');
-    buffer.writeln('-----------------------');
-    buffer.writeln('OLAY LOGLARI (EVENT SOURCING):');
-    for (var event in provider.events) {
-      buffer.writeln(event.toString());
-    }
-
-    // Attempt local share via system
-    Share.share(
-      buffer.toString(),
-      subject: 'MTP Vaka Raporu: ${provider.currentCaseId}',
-    );
-
-    // Close in provider and navigate to start
+  void _saveAndFinish(MtpStateProvider provider) {
     provider.closeCase(_notesController.text);
     Navigator.of(
       context,
@@ -55,36 +78,37 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<MtpStateProvider>(context);
+    final provider = Provider.of<MtpStateProvider>(context, listen: false);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vaka Özeti ve Dışa Aktar'),
+        title: const Text('Vaka Özeti'),
         automaticallyImplyLeading: false,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Icon(
               Icons.check_circle_outline,
-              size: 80,
+              size: 72,
               color: AppTheme.okGreen,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'MTP VAKASI SONLANDIRILDI',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: theme.textTheme.headlineMedium?.color,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            // Summary card
             Card(
               color: isDark ? Colors.black26 : AppTheme.lightSurfaceAltColor,
               shape: RoundedRectangleBorder(
@@ -98,36 +122,102 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Case ID + location
+                    Row(
+                      children: [
+                        const Icon(Icons.folder_open, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '$_caseId · $_location',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: theme.textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20),
+                    // ABC Score breakdown
                     Text(
-                      "Harekete Geçilen Vaka: ${provider.currentCaseId ?? 'TRM-XX'}",
+                      'ABC Skoru: $_abcScore / 4',
                       style: TextStyle(
                         fontSize: 18,
-                        color: theme.textTheme.bodyMedium?.color,
+                        fontWeight: FontWeight.bold,
+                        color: _abcScore >= 2
+                            ? AppTheme.alertRed
+                            : AppTheme.okGreen,
                       ),
                     ),
                     const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        _criterionPill(context, 'KH≥120', _hrMet),
+                        _criterionPill(context, 'SKB≤90', _sbpMet),
+                        _criterionPill(context, 'FAST(+)', _fastMet),
+                        _criterionPill(context, 'PENETRAN', _penetratingMet),
+                      ],
+                    ),
+                    const Divider(height: 20),
+                    // Product counts
                     Text(
-                      'Toplam Verilen Ürün: ${provider.totalProductsGiven}',
+                      'Toplam Ürün: $_totalProducts',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: theme.textTheme.titleLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _productBadge(context, 'ES', _prbcCount, AppTheme.prbcColor),
+                        const SizedBox(width: 8),
+                        _productBadge(context, 'TDP', _ffpCount, AppTheme.ffpColor),
+                        const SizedBox(width: 8),
+                        _productBadge(context, 'TSP', _pltCount, AppTheme.pltColor),
+                        const SizedBox(width: 8),
+                        _productBadge(
+                          context,
+                          'KRIYO',
+                          _cryoCount,
+                          Colors.purple[300]!,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     Text(
-                      'ES: ${provider.prbcCount} | TDP: ${provider.ffpCount} | TSP: ${provider.pltCount} | KRIYO: ${provider.cryoCount}',
+                      'ES:TDP:TSP = $_ratioDisplay  (Hedef: ${_use211 ? '2:1:1' : '1:1:1'})',
                       style: TextStyle(
-                        fontSize: 16,
-                        color: theme.textTheme.bodyLarge?.color,
+                        fontSize: 14,
+                        color: theme.textTheme.bodyMedium?.color,
                       ),
+                    ),
+                    const Divider(height: 20),
+                    // MTP duration
+                    Row(
+                      children: [
+                        const Icon(Icons.timer_outlined, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'MTP Süresi: $_mtpDuration',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             TextField(
               controller: _notesController,
               maxLines: 4,
@@ -138,21 +228,79 @@ class _EndCaseScreenState extends State<EndCaseScreen> {
                 alignLabelWithHint: true,
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 24),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              onPressed: () => _exportAndFinish(provider),
-              icon: const Icon(Icons.share),
+              onPressed: () => _saveAndFinish(provider),
+              icon: const Icon(Icons.save_outlined),
               label: const Text(
-                'LOGLARI DIŞA AKTAR VE BAŞA DÖN',
+                'KAYDET VE BAŞA DÖN',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _criterionPill(BuildContext context, String label, bool met) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: met
+            ? AppTheme.alertRed
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: met
+              ? Colors.white
+              : Theme.of(context).textTheme.bodySmall?.color,
+        ),
+      ),
+    );
+  }
+
+  Widget _productBadge(
+    BuildContext context,
+    String label,
+    int count,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            count.toString(),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
+        ],
       ),
     );
   }
